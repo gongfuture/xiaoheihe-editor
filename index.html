@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Markdown 双屏编辑器</title>
+  <title>小黑盒文章转换器 - Markdown 转富文本</title>
   <style>
     * {
       box-sizing: border-box;
@@ -22,27 +22,46 @@
       overflow: hidden;
     }
 
-    /* Column Toggles */
+    /* Column Toggles - Premium Segmented Control */
     .column-toggles {
-      display: flex;
-      gap: 16px;
-      margin-bottom: 12px;
-      padding: 0 4px;
+      display: inline-flex;
+      background: #e4e4e7;
+      padding: 2px;
+      border-radius: 8px;
+      gap: 2px;
     }
 
     .column-toggle {
+      position: relative;
       display: flex;
       align-items: center;
-      gap: 6px;
+      justify-content: center;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #71717a;
       cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s;
       user-select: none;
-      font-size: 14px;
-      color: #333;
+    }
+
+    .column-toggle:hover {
+      color: #27272a;
     }
 
     .column-toggle input {
-      margin: 0;
+      position: absolute;
+      opacity: 0;
       cursor: pointer;
+      height: 0;
+      width: 0;
+    }
+
+    .column-toggle:has(input:checked) {
+      background: white;
+      color: #18181b;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
 
     header {
@@ -579,8 +598,10 @@
       overflow-y: auto;
       word-wrap: break-word;
       white-space: pre-wrap;
-      font-size: 14px;
-      line-height: 1.6;
+      font-size: 15px;
+      /* Slightly larger for better preview */
+      line-height: 1.7;
+      color: #2c3e50;
     }
 
     /* 图片占位符样式 */
@@ -697,19 +718,19 @@
 <body>
   <header style="display: flex; align-items: center; justify-content: space-between;">
     <div style="flex: 1;">
-      <h1>📝 Markdown 双屏编辑器</h1>
-      <p class="description">左侧编辑 Markdown 源码，右侧实时预览。两侧内容会自动同步。</p>
+      <h1 style="display: flex; align-items: center; gap: 8px;">📦 小黑盒文章转换器</h1>
+      <p class="description">一键将 Markdown 转换为适合小黑盒发布的富文本内容，支持代码高亮与表格转图。</p>
     </div>
 
-    <div class="column-toggles" style="flex: 0 0 auto; margin: 0 24px;">
+    <div class="column-toggles" style="flex: 0 0 auto; margin: 0 32px;">
       <label class="column-toggle">
-        <input type="checkbox" id="toggle-source" checked> MD源码
+        <input type="checkbox" id="toggle-source" checked> 源码编辑
       </label>
       <label class="column-toggle">
-        <input type="checkbox" id="toggle-preview" checked> 可视编辑
+        <input type="checkbox" id="toggle-preview" checked> 实时预览
       </label>
       <label class="column-toggle">
-        <input type="checkbox" id="toggle-export" checked> 导出预览
+        <input type="checkbox" id="toggle-export" checked> 导出转换
       </label>
     </div>
 
@@ -759,32 +780,37 @@
           </li>
         </ul>
         <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e0e0e0;">
-          <div style="font-size: 12px; color: #999; margin-bottom: 8px;">导出转换规则</div>
+          <div style="font-size: 12px; color: #999; margin-bottom: 8px;">小黑盒专用转换规则</div>
           <ul class="syntax-list">
             <li class="syntax-item">
-              <span class="syntax-icon">`</span>
-              <span class="syntax-name">行内代码</span>
-              <code class="syntax-code">`code` → ****粗体****</code>
+              <span class="syntax-icon">✨</span>
+              <span class="syntax-name">格式平铺</span>
+              <code class="syntax-code">行内代码/斜体/删除线 → **粗体**</code>
             </li>
             <li class="syntax-item">
               <span class="syntax-icon">▦</span>
               <span class="syntax-name">代码块/表格</span>
-              <code class="syntax-code">转为图片</code>
+              <code class="syntax-code">自动生成高亮图片 (防乱码)</code>
             </li>
             <li class="syntax-item">
               <span class="syntax-icon">↗</span>
               <span class="syntax-name">超链接</span>
-              <code class="syntax-code">添加 title</code>
+              <code class="syntax-code">自动添加 title (小黑盒规范)</code>
             </li>
             <li class="syntax-item">
               <span class="syntax-icon">“</span>
-              <span class="syntax-name">粗体引号</span>
+              <span class="syntax-name">引号优化</span>
               <code class="syntax-code">**“文字”** → “**文字**”</code>
             </li>
             <li class="syntax-item">
               <span class="syntax-icon">🖼️</span>
-              <span class="syntax-name">本地图片</span>
-              <code class="syntax-code">生成图片信息占位符</code>
+              <span class="syntax-name">图片处理</span>
+              <code class="syntax-code">本地路径转为占位符</code>
+            </li>
+            <li class="syntax-item">
+              <span class="syntax-icon">📋</span>
+              <span class="syntax-name">一键复制</span>
+              <code class="syntax-code">自动清理图片 alt (防幽灵文字)</code>
             </li>
           </ul>
         </div>
@@ -795,19 +821,19 @@
   <div class="editor-wrapper">
     <!-- 1. Markdown 源码 -->
     <div class="editor-pane" id="pane-source">
-      <div class="pane-header">Markdown 源码</div>
+      <div class="pane-header">源码编辑</div>
       <div id="markdown-editor" class="editor-container"></div>
     </div>
 
-    <!-- 2. 可视编辑 -->
+    <!-- 2. 实时预览 -->
     <div class="editor-pane" id="pane-preview">
-      <div class="pane-header">可视编辑</div>
+      <div class="pane-header">实时预览</div>
       <div id="wysiwyg-editor" class="editor-container"></div>
     </div>
 
-    <!-- 3. 导出预览 -->
+    <!-- 3. 导出转换 -->
     <div class="editor-pane" id="pane-export">
-      <div class="pane-header">导出预览</div>
+      <div class="pane-header">导出转换</div>
       <div class="editor-container" style="display: flex; flex-direction: column;">
         <div id="export-editor" class="export-editor-container"></div>
         <div class="export-footer">
@@ -866,9 +892,9 @@
 
     // 默认内容
     // 默认内容
-    const defaultContent = `# 欢迎使用小黑盒 Markdown 编辑器
+    const defaultContent = `# 欢迎使用小黑盒文章转换器
 
-这是一个专为小黑盒社区设计的双屏编辑器。左侧编辑，右侧实时预览，最右侧还可以预览导出效果。
+这是一个专为小黑盒社区设计的转换工具。在“源码编辑”栏编写内容，通过“实时预览”查看样式，最终在“导出转换”栏获取可以直接发布到小黑盒的富文本成果。
 
 ## 1. 基础排版 (Common Formats)
 
@@ -893,49 +919,42 @@
 
 ## 4. 核心功能：自动转化 (Auto Conversion)
 
-本编辑器最有特色的功能是**自动将代码块和表格转化为图片**，以适配移动端阅读。
+本编辑器最有特色的功能是**自动将代码块和表格转化为图片**，以适配移动端阅读并防止样式乱码。
 
 ### 4.1 代码块转图片
 
-下方展示了一段 JavaScript 代码（实际上就是本编辑器处理转化的核心源码）：
+下方展示了一段 JavaScript 代码，它会被自动识别并转为带有语法高亮、自动宽度的图片：
 
 \`\`\`javascript
-// 处理 Markdown 内容，生成图片并返回新的 Markdown
-async function processMarkdownForExport(markdown) {
-  let processed = markdown;
-  
-  // 1. 处理代码块
-  const codeBlockRegex = /\\\`\\\`\\\`(\w+)?\\n([\\s\\S]*?)\\\`\\\`\\\`/g;
-  let match;
-  while ((match = codeBlockRegex.exec(markdown)) !== null) {
-    const language = match[1] || '';
-    const code = match[2].trim();
-    // 生成图片的关键一步
-    const imageUrl = generateCodeBlockImage(code, language);
-    processed = processed.replace(match[0], \`\\n![代码块](\${imageUrl})\\n\`);
-  }
-  return processed;
+// 将代码块生成图片
+function generateCodeBlockImage(code, language) {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  // ... 渲染逻辑
+  return canvas.toDataURL('image/png');
 }
 \`\`\`
 
 ### 4.2 表格转图片
 
-复杂的表格也会在导出预览中变成一张整洁的图片：
+复杂的表格也会在“导出转换”栏中变成一张整洁的图片，且支持单元格内换行：
 
-| 功能 | 说明 | 导出效果 |
+| 功能名称 | 技术实现 | 导出效果 |
 | :--- | :--- | :--- |
-| **代码块** | 支持语法高亮 | 🖼️ 自动转为图片 |
-| **表格** | 支持对齐方式 | 🖼️ 自动转为图片 |
-| **行内代码** | \`code\` 样式 | **加粗显示** |
-| **超链接** | 链接文本 | 保留 Title 属性 |
+| **代码高亮** | 自定义 Canvas 渲染 | 🖼️ 自动转为图片 |
+| **表格内换行** | 自动文本换行引擎 | 🖼️ 自动转为图片 |
+| **格式平铺** | 正则表达式重构 | **统一加粗显示** |
+| **引号优化** | 自动提取引号外置 | “**效果更佳**” |
 
-## 5. 常见问题
+## 5. 导出说明
 
-> Q: 为什么导出的图片需要手动复制？
+转换后的所有行内格式（代码、斜体、删除线）都会被平铺为**粗体**。图片链接如果是本地路径，会自动转为占位符提示，方便手动定位插入。
+
+> **💡 复制小贴士**
 > 
-> A: 受限于浏览器安全策略和小黑盒编辑器限制，图片需要手动右键复制。
+> 点击最右侧的按钮一键复制文字内容。针对生成的图片，请右键点击预览图选择“复制图片”，然后在小黑盒编辑器中粘贴即可。
 
-快去试试导出预览功能吧！🚀`;
+快去试试吧！🚀`;
 
     // Markdown 视图
     class MarkdownView {
