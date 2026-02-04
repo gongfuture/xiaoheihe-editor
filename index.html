@@ -1471,18 +1471,21 @@ function generateCodeBlockImage(code, language) {
       setTimeout(() => {
         const images = target.querySelectorAll('img');
         images.forEach(img => {
-          // 1. Remove margins for purely generated images (Code Block & Table)
-          // We identify them by the alt text we set earlier.
+          // ... 
           if (img.alt === '代码块' || img.alt === '表格') {
             const parentP = img.closest('p');
             if (parentP) {
               parentP.style.marginBottom = '0';
-              // Also ensure the line height doesn't add extra space
               parentP.style.lineHeight = '0';
             }
           }
         });
-      }, 50); // Small delay to ensure render
+
+        // Add scroll listener for sync
+        if (exportEditorView) {
+          exportEditorView.dom.addEventListener('scroll', handleScroll);
+        }
+      }, 50);
 
       return exportEditorView;
     }
@@ -1537,15 +1540,48 @@ function generateCodeBlockImage(code, language) {
       }
     });
 
+    const pmView = new ProseMirrorView(pmTarget, defaultContent);
+
+    // --- 同步滚动逻辑 (Synchronized Scrolling) ---
+    let isSyncingScroll = false;
+    function handleScroll(e) {
+      if (isSyncingScroll) return;
+
+      const source = e.target;
+      // Calculate scroll percentage
+      const percentage = source.scrollTop / (source.scrollHeight - source.clientHeight);
+      if (isNaN(percentage)) return;
+
+      isSyncingScroll = true;
+
+      // Identify scrollable targets
+      const targets = [
+        mdView.textarea,
+        pmView.view.dom,
+        exportEditorView ? exportEditorView.dom : null
+      ].filter(t => t && t !== source);
+
+      targets.forEach(target => {
+        const targetMaxScroll = target.scrollHeight - target.clientHeight;
+        target.scrollTop = percentage * targetMaxScroll;
+      });
+
+      // Unlock after animation frame or small delay to prevent feedback loops
+      window.requestAnimationFrame(() => {
+        isSyncingScroll = false;
+      });
+    }
+
+    // 绑定初始面板的滚动事件
+    mdView.textarea.addEventListener('scroll', handleScroll);
+    pmView.view.dom.addEventListener('scroll', handleScroll);
+
     // Trigger initial export content generation
     if (!panes.export.hidden) {
-      // Wait for next tick to ensure everything is ready
       setTimeout(() => {
         updateExportContent();
       }, 0);
     }
-
-    const pmView = new ProseMirrorView(pmTarget, defaultContent);
 
     // 复制到剪贴板功能
     const exportCopyBtn = document.getElementById('exportCopyBtn');
