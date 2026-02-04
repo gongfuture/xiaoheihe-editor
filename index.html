@@ -1269,63 +1269,6 @@ async function processMarkdownForExport(markdown) {
               parentP.style.lineHeight = '0';
             }
           }
-
-          // 2. Add click listener for copy
-          img.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-
-            // 创建一个临时的图片元素用于复制
-            const tempImg = document.createElement('img');
-            tempImg.src = img.src;
-            tempImg.style.cssText = `
-              position: fixed;
-              left: -9999px;
-              top: 0;
-              opacity: 0;
-            `;
-            document.body.appendChild(tempImg);
-
-            // 选中图片
-            const range = document.createRange();
-            range.selectNode(tempImg);
-            const selection = window.getSelection();
-            selection.removeAllRanges();
-            selection.addRange(range);
-
-            // 尝试复制
-            try {
-              document.execCommand('copy');
-
-              // 显示提示
-              const hint = document.createElement('div');
-              hint.textContent = '图片已选中，请粘贴到小黑盒编辑器';
-              hint.style.cssText = `
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: rgba(0,0,0,0.8);
-                color: white;
-                padding: 12px 24px;
-                border-radius: 8px;
-                font-size: 14px;
-                z-index: 10000;
-                pointer-events: none;
-              `;
-              document.body.appendChild(hint);
-
-              setTimeout(() => {
-                document.body.removeChild(hint);
-              }, 2000);
-            } catch (err) {
-              console.error('复制图片失败:', err);
-            }
-
-            // 清理
-            selection.removeAllRanges();
-            document.body.removeChild(tempImg);
-          });
         });
       }, 50); // Small delay to ensure render
 
@@ -1454,29 +1397,17 @@ async function processMarkdownForExport(markdown) {
         plainText = plainText.replace(/!\[.*?\]\(.*?\)/g, '');
         // 移除 base64 图片 URL
         plainText = plainText.replace(/!\[\s*\]\(data:image\/[^)]+\)/g, '');
+
         // 清理多余的空行
         plainText = plainText.replace(/\n\n+/g, '\n\n').trim();
         const textBlob = new Blob([plainText], { type: 'text/plain' });
+        const htmlBlob = new Blob([htmlContent], { type: 'text/html' });
 
-        // 构建 clipboard item data
-        const itemData = {};
-
-        // 如果有图片，添加图片 blob 和 HTML
-        if (images.length > 0) {
-          images.forEach(img => {
-            itemData[img.type] = img.blob;
-          });
-          // 添加 HTML 格式（包含 img 标签）
-          const htmlBlob = new Blob([htmlContent], { type: 'text/html' });
-          itemData['text/html'] = htmlBlob;
-          // 添加纯文本（不包含 Markdown 图片语法）
-          itemData['text/plain'] = textBlob;
-        } else {
-          // 没有图片时，添加 HTML 和文本
-          const htmlBlob = new Blob([htmlContent], { type: 'text/html' });
-          itemData['text/html'] = htmlBlob;
-          itemData['text/plain'] = textBlob;
-        }
+        // 构建 clipboard item data - 只包含 HTML 和 文本
+        const itemData = {
+          'text/html': htmlBlob,
+          'text/plain': textBlob
+        };
 
         // 使用 Clipboard API 写入
         const clipboardItem = new ClipboardItem(itemData);
