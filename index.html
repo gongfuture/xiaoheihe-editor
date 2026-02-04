@@ -841,36 +841,76 @@
     import { exampleSetup } from 'prosemirror-example-setup';
 
     // 默认内容
-    const defaultContent = `## 欢迎使用 Markdown 双屏编辑器
+    // 默认内容
+    const defaultContent = `# 欢迎使用小黑盒 Markdown 编辑器
 
-左侧是 **Markdown 源码**，右侧是 **实时预览**。
+这是一个专为小黑盒社区设计的双屏编辑器。左侧编辑，右侧实时预览，最右侧还可以预览导出效果。
 
-### 特性
+## 1. 基础排版 (Common Formats)
 
-- 两侧内容实时同步
-- 支持常用 Markdown 语法
-- 可视化工具栏操作
+**粗体文字**、*斜体文字*、~~删除线~~。
+行内代码 \`console.log('Hello')\` 会在导出时自动转为粗体。
+[小黑盒官网](https://www.xiaoheihe.cn/)
 
-### 示例
+## 2. 列表 (Lists)
 
-**粗体**、*斜体*、\`代码\`
+- 无序列表项 1
+- 无序列表项 2
+  - 嵌套列表
 
-\`\`\`javascript
-function hello() {
-  console.log("Hello World!");
-}
-\`\`\`
+1. 有序列表 1
+2. 有序列表 2
 
-> 引用块
+## 3. 引用与分割线
 
-| 功能 | 状态 |
-|------|------|
-| 实时同步 | ✅ |
-| 双屏编辑 | ✅ |
+> 引用块：Markdown 是一种轻量级标记语言。
 
 ---
 
-开始编辑吧！`;
+## 4. 核心功能：自动转化 (Auto Conversion)
+
+本编辑器最有特色的功能是**自动将代码块和表格转化为图片**，以适配移动端阅读。
+
+### 4.1 代码块转图片
+
+下方展示了一段 JavaScript 代码（实际上就是本编辑器处理转化的核心源码）：
+
+\`\`\`javascript
+// 处理 Markdown 内容，生成图片并返回新的 Markdown
+async function processMarkdownForExport(markdown) {
+  let processed = markdown;
+  
+  // 1. 处理代码块
+  const codeBlockRegex = /\\\`\\\`\\\`(\w+)?\\n([\\s\\S]*?)\\\`\\\`\\\`/g;
+  let match;
+  while ((match = codeBlockRegex.exec(markdown)) !== null) {
+    const language = match[1] || '';
+    const code = match[2].trim();
+    // 生成图片的关键一步
+    const imageUrl = generateCodeBlockImage(code, language);
+    processed = processed.replace(match[0], \`\\n![代码块](\${imageUrl})\\n\`);
+  }
+  return processed;
+}
+\`\`\`
+
+### 4.2 表格转图片
+
+复杂的表格也会在导出预览中变成一张整洁的图片：
+
+| 功能 | 说明 | 导出效果 |
+| :--- | :--- | :--- |
+| **代码块** | 支持语法高亮 | 🖼️ 自动转为图片 |
+| **表格** | 支持对齐方式 | 🖼️ 自动转为图片 |
+| **行内代码** | \`code\` 样式 | **加粗显示** |
+| **超链接** | 链接文本 | 保留 Title 属性 |
+
+## 5. 常见问题
+
+> Q: 为什么导出的图片需要手动复制？
+> A: 受限于浏览器安全策略和小黑盒编辑器限制，图片需要手动右键复制。
+
+快去试试导出预览功能吧！🚀`;
 
     // Markdown 视图
     class MarkdownView {
