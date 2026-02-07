@@ -1631,7 +1631,8 @@ function generateCodeBlockImage(code, language) {
 
       // 2.6 处理 base64 图片：将 data:image 转为占位符文本
       // 小黑盒不支持 base64 图片，需要用户手动复制粘贴
-      processed = processed.replace(/!\[(代码块|表格)\]\(data:image\/[^)]+\)/g, (match, alt) => {
+      // 只处理步骤1和步骤2生成的代码块和表格图片（通过精确匹配alt文本）
+      processed = processed.replace(/!\[(代码块|表格)\]\(data:image\/[^)]*\)/g, (match, alt) => {
         return `\n（图片：${alt} - 请在预览区域右键点击对应图片，选择"复制图片"，然后粘贴到小黑盒编辑器）\n`;
       });
 
